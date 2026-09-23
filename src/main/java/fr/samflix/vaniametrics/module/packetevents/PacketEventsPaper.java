@@ -7,30 +7,30 @@ import fr.samflix.vaniametrics.api.VaniaMetrics;
 import fr.samflix.vaniametrics.api.VaniaMetricsProvider;
 
 /**
- * PacketEvents — le trafic réseau, que l'API du serveur ne montre pas du tout.
+ * PacketEvents — network traffic, which the server API doesn't show at all.
  *
- * <p>Son intercepteur tourne sur le fil réseau, pour CHAQUE paquet. Il n'y fait qu'un incrément atomique, mais c'est une décision qui se prend : ce jar ne s'installe que si on le veut.
+ * <p>Its interceptor runs on the network thread, for every packet. It only does an atomic
+ * increment there, but that's a decision worth making: this jar is only installed if wanted.
  *
- * <p>SON plugin.yml DÉCLARE {@code depend: [VaniaMetrics, packetevents]} : les deux sont
- * indispensables, et le déclarer laisse Bukkit garantir l'ordre de chargement plutôt que de
- * l'espérer. Retirer ce jar retire cette intégration et RIEN D'AUTRE — c'est tout l'intérêt d'un
- * jar par intégration.
+ * <p>Its plugin.yml declares {@code depend: [VaniaMetrics, packetevents]}: both are required, and
+ * declaring it lets Bukkit guarantee load order instead of hoping for it. Removing this jar
+ * removes this integration and nothing else — that's the whole point of one jar per integration.
  */
 public final class PacketEventsPaper extends JavaPlugin {
 
-	private Collector collecteur;
+	private Collector collector;
 
 	@Override
 	public void onEnable() {
-		VaniaMetrics metriques = VaniaMetricsProvider.get();
-		collecteur = new PacketEventsCollector(metriques.plateforme(), metriques.config());
-		metriques.enregistrer(collecteur);
+		VaniaMetrics metrics = VaniaMetricsProvider.get();
+		collector = new PacketEventsCollector(metrics.platform(), metrics.config());
+		metrics.register(collector);
 	}
 
 	@Override
 	public void onDisable() {
-		if (collecteur != null) {
-			VaniaMetricsProvider.chercher().ifPresent(m -> m.retirer(collecteur));
+		if (collector != null) {
+			VaniaMetricsProvider.find().ifPresent(m -> m.unregister(collector));
 		}
 	}
 }

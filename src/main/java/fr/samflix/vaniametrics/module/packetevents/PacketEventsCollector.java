@@ -23,102 +23,102 @@ import fr.samflix.vaniametrics.api.MetricRegistry;
 import fr.samflix.vaniametrics.api.Platform;
 
 /**
- * Le compteur de paquets.
+ * The packet counter.
  *
- * <p>LE TRAVAIL SE FAIT DANS L'ÉCOUTEUR, PAS DANS LE RELEVÉ : chaque paquet incrémente un
- * compteur, et le scrape ne fait que lire. C'est l'inverse des autres collecteurs, et c'est la
- * seule façon tenable de mesurer quelque chose qui arrive dix mille fois par seconde.
+ * <p>The work happens in the listener, not in collect: every packet increments a counter, and the
+ * scrape only reads. This is the reverse of the other collectors, and it's the only tenable way
+ * to measure something that happens ten thousand times a second.
  *
- * <p>LA TAILLE DES PAQUETS N'EST PAS PUBLIÉE, et ce n'est pas un oubli : l'API de PacketEvents
- * n'expose aucune longueur d'octets sur ses événements — vérifié sur {@code ProtocolPacketEvent}
- * et {@code PacketReceiveEvent}. La mesurer voudrait dire lire le {@code ByteBuf} de Netty par
- * réflexion, sur le fil réseau, pour chaque paquet. Le jeu n'en vaut pas la chandelle.
+ * <p>Packet size is not published, and that's not an oversight: PacketEvents' API exposes no byte
+ * length on its events — checked on {@code ProtocolPacketEvent} and {@code PacketReceiveEvent}.
+ * Measuring it would mean reading Netty's {@code ByteBuf} by reflection, on the network thread,
+ * for every packet. Not worth it.
  */
 public final class PacketEventsCollector implements Collector {
 
-	private final Platform plateforme;
-	private final Set<String> typesSuivis;
+	private final Platform platform;
+	private final Set<String> trackedTypes;
 
-	private Counter paquets;
-	private Gauge parVersion;
-	private PacketListenerAbstract ecouteur;
+	private Counter packets;
+	private Gauge byVersion;
+	private PacketListenerAbstract listener;
 
-	public PacketEventsCollector(Platform plateforme, Config config) {
-		this.plateforme = plateforme;
-		// Vide par défaut : on compte le total et rien d'autre tant que personne n'a dit quels
-		// types l'intéressent. Une liste blanche vide vaut mieux que quatre cents séries.
-		String liste = config.texte("collector.packets.types", "");
-		this.typesSuivis = liste.isBlank()
+	public PacketEventsCollector(Platform platform, Config config) {
+		this.platform = platform;
+		// Empty by default: count the total and nothing else until someone says which types
+		// they care about. An empty whitelist beats four hundred series.
+		String list = config.getString("collector.packets.types", "");
+		this.trackedTypes = list.isBlank()
 				? Set.of()
-				: new HashSet<>(Arrays.asList(liste.toLowerCase(Locale.ROOT).split("\\s*,\\s*")));
+				: new HashSet<>(Arrays.asList(list.toLowerCase(Locale.ROOT).split("\\s*,\\s*")));
 	}
 
 	@Override
-	public String nom() {
+	public String name() {
 		return "packets";
 	}
 
 	@Override
-	public String origine() {
+	public String source() {
 		return "packetevents";
 	}
 
 	@Override
-	public void declarer(MetricRegistry r) {
-		paquets = r.counter("network_packets_total",
-				"Paquets traversant le serveur. direction = in|out. packet_type est borné par "
-						+ "collector.packets.types ; tout le reste tombe dans « other ».",
+	public void declare(MetricRegistry r) {
+		packets = r.counter("network_packets_total",
+				"Packets crossing the server. direction = in|out. packet_type is bounded by "
+						+ "collector.packets.types; everything else falls into \"other\".",
 				"direction", "packet_type");
-		parVersion = r.gauge("network_players_by_protocol",
-				"Joueurs par version de protocole. PacketEvents est le seul à la connaître : "
-						+ "org.bukkit.entity.Player ne l'expose pas.",
+		byVersion = r.gauge("network_players_by_protocol",
+				"Players by protocol version. PacketEvents is the only one that knows it: "
+						+ "org.bukkit.entity.Player doesn't expose it.",
 				"protocol", "version_name");
 
-		ecouteur = new PacketListenerAbstract(PacketListenerPriority.MONITOR) {
+		listener = new PacketListenerAbstract(PacketListenerPriority.MONITOR) {
 			@Override
 			public void onPacketReceive(PacketReceiveEvent e) {
-				paquets.inc("in", type(e.getPacketType().getName()));
+				packets.inc("in", type(e.getPacketType().getName()));
 			}
 
 			@Override
 			public void onPacketSend(PacketSendEvent e) {
-				paquets.inc("out", type(e.getPacketType().getName()));
+				packets.inc("out", type(e.getPacketType().getName()));
 			}
 		};
-		PacketEvents.getAPI().getEventManager().registerListener(ecouteur);
-		plateforme.info("collecteur packets — écouteur branché, "
-				+ (typesSuivis.isEmpty() ? "total seul" : typesSuivis.size() + " type(s) suivi(s)"));
+		PacketEvents.getAPI().getEventManager().registerListener(listener);
+		platform.info("packets collector — listener attached, "
+				+ (trackedTypes.isEmpty() ? "total only" : trackedTypes.size() + " type(s) tracked"));
 	}
 
 	@Override
-	public void relever(MetricRegistry r) {
-		parVersion.clear();
-		Map<String, Integer> compte = new HashMap<>();
-		Map<String, String> noms = new HashMap<>();
+	public void collect(MetricRegistry r) {
+		byVersion.clear();
+		Map<String, Integer> count = new HashMap<>();
+		Map<String, String> names = new HashMap<>();
 		for (User u : PacketEvents.getAPI().getProtocolManager().getUsers()) {
 			ClientVersion v = u.getClientVersion();
 			if (v == null) {
 				continue;
 			}
-			String protocole = String.valueOf(v.getProtocolVersion());
-			compte.merge(protocole, 1, Integer::sum);
-			noms.put(protocole, v.name().toLowerCase(Locale.ROOT));
+			String protocol = String.valueOf(v.getProtocolVersion());
+			count.merge(protocol, 1, Integer::sum);
+			names.put(protocol, v.name().toLowerCase(Locale.ROOT));
 		}
-		compte.forEach((p, n) -> parVersion.set(n, p, noms.getOrDefault(p, "unknown")));
+		count.forEach((p, n) -> byVersion.set(n, p, names.getOrDefault(p, "unknown")));
 	}
 
 	@Override
-	public void fermer() {
-		if (ecouteur != null) {
-			PacketEvents.getAPI().getEventManager().unregisterListener(ecouteur);
+	public void close() {
+		if (listener != null) {
+			PacketEvents.getAPI().getEventManager().unregisterListener(listener);
 		}
 	}
 
-	private String type(String nom) {
-		if (typesSuivis.isEmpty()) {
+	private String type(String name) {
+		if (trackedTypes.isEmpty()) {
 			return "all";
 		}
-		String n = nom.toLowerCase(Locale.ROOT);
-		return typesSuivis.contains(n) ? n : "other";
+		String n = name.toLowerCase(Locale.ROOT);
+		return trackedTypes.contains(n) ? n : "other";
 	}
 }

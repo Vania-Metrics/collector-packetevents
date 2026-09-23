@@ -15,17 +15,17 @@ import fr.samflix.vaniametrics.api.VaniaMetricsProvider;
 import fr.samflix.vaniametrics.api.Version;
 
 /**
- * PacketEvents — le trafic réseau, que l'API du serveur ne montre pas du tout. — côté Velocity.
+ * PacketEvents — network traffic, which the server API doesn't show at all. — Velocity side.
  *
- * <p>Même collecteur, autre point d'entrée. Les deux classes cohabitent dans le MÊME jar : Bukkit
- * lit plugin.yml et charge la variante Paper, Velocity lit velocity-plugin.json et charge
- * celle-ci. Chacun ignore l'autre, qui n'est jamais chargée.
+ * <p>Same collector, different entry point. Both classes live in the SAME jar: Bukkit reads
+ * plugin.yml and loads the Paper variant, Velocity reads velocity-plugin.json and loads this one.
+ * Each ignores the other, which is never loaded.
  */
 @Plugin(
 		id = "vaniametrics-packetevents",
 		name = "VaniaMetrics PacketEvents",
-		version = Version.VALEUR,
-		description = "PacketEvents — le trafic réseau, que l'API du serveur ne montre pas du tout.",
+		version = Version.VALUE,
+		description = "PacketEvents — network traffic, which the server API doesn't show at all.",
 		authors = {"mc-vania"},
 		dependencies = {
 			@Dependency(id = "vaniametrics"),
@@ -33,26 +33,26 @@ import fr.samflix.vaniametrics.api.Version;
 		})
 public final class PacketEventsVelocity {
 
-	private final Logger journal;
-	private Collector collecteur;
+	private final Logger logger;
+	private Collector collector;
 
 	@Inject
-	public PacketEventsVelocity(Logger journal) {
-		this.journal = journal;
+	public PacketEventsVelocity(Logger logger) {
+		this.logger = logger;
 	}
 
 	@Subscribe
 	public void onInit(ProxyInitializeEvent e) {
-		VaniaMetrics metriques = VaniaMetricsProvider.get();
-		collecteur = new PacketEventsCollector(metriques.plateforme(), metriques.config());
-		metriques.enregistrer(collecteur);
-		journal.info("collecteur packetevents enregistré");
+		VaniaMetrics metrics = VaniaMetricsProvider.get();
+		collector = new PacketEventsCollector(metrics.platform(), metrics.config());
+		metrics.register(collector);
+		logger.info("packetevents collector registered");
 	}
 
 	@Subscribe
 	public void onShutdown(ProxyShutdownEvent e) {
-		if (collecteur != null) {
-			VaniaMetricsProvider.chercher().ifPresent(m -> m.retirer(collecteur));
+		if (collector != null) {
+			VaniaMetricsProvider.find().ifPresent(m -> m.unregister(collector));
 		}
 	}
 }
