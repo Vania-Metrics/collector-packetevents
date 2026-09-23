@@ -1,0 +1,11 @@
+# What the test server needs besides the core; read by the core's testkit (CollectorTestConfig).
+# The first jar of a list is the target plugin: its version is checked against compatibility.yml.
+collectors: [packets]
+runtime: java21
+plugins:
+  bukkit:
+    - url: https://cdn.modrinth.com/data/HYKaKraK/versions/h0ncTpUP/packetevents-spigot-2.13.0.jar
+      sha512: f0f85e601855a5849418df807e116a369bfb70aa8b4c25b8904bdd04cf6a483ef5d2679a345e9d690dd2221f9daff6a25be17d8b3e63cf665e12a31b0124dd27
+  velocity:
+    - url: https://cdn.modrinth.com/data/HYKaKraK/versions/378RBjPw/packetevents-velocity-2.13.0.jar
+      sha512: cc0d5e1e43f88ae131a012a3f0b71c540943c2e033fcdb08620a8cc182c57ecf033c08379fa637f1d804572144660cbf0a9a386282c4073179d5cf9ed8dbcd17
