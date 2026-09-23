@@ -1,0 +1,13 @@
+# Métriques PacketEvents : trafic réseau et version des clients.
+#
+# UN JAR, UNE INTÉGRATION. Le retirer retire ces métriques et rien d'autre ; s'il
+# plante, il plante seul. C'est ce que « depend » rend vrai : sans le noyau ou sans
+# PacketEvents, Bukkit ne charge pas ce plugin et le dit clairement, au lieu
+# de laisser un collecteur échouer en silence à chaque scrape.
+name: VaniaMetrics-PacketEvents
+version: ${version}
+main: fr.samflix.vaniametrics.module.packetevents.PacketEventsPaper
+api-version: '1.21'
+authors: [mc-vania]
+description: "Métriques PacketEvents : trafic réseau et version des clients."
+depend: [VaniaMetrics, packetevents]
