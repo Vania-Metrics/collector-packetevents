@@ -1,0 +1,8 @@
+# The BungeeCord and Waterfall entry point. BungeeCord reads this file before plugin.yml, which
+# is Bukkit's; Velocity reads velocity-plugin.json. One jar, three platforms.
+name: VaniaMetrics-PacketEvents
+version: ${version}
+main: fr.samflix.vaniametrics.module.packetevents.PacketEventsBungee
+author: mc-vania
+description: "PacketEvents — network traffic, which the server API doesn't show at all."
+depends: [VaniaMetrics, packetevents]

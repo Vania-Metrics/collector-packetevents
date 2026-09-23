@@ -9,3 +9,6 @@ plugins:
   velocity:
     - url: https://cdn.modrinth.com/data/HYKaKraK/versions/378RBjPw/packetevents-velocity-2.13.0.jar
       sha512: cc0d5e1e43f88ae131a012a3f0b71c540943c2e033fcdb08620a8cc182c57ecf033c08379fa637f1d804572144660cbf0a9a386282c4073179d5cf9ed8dbcd17
+  bungee:
+    - url: https://cdn.modrinth.com/data/HYKaKraK/versions/xqNx6f3s/packetevents-bungeecord-2.13.0.jar
+      sha512: 882d8248510c65f3c2a3fe19f851f2b7332dc069c973194898f2ae3e357988a2aeeb0f242e8e64e420bf8a2d4f95aed935efc7dd664fa56192e8a8c68f178c4a
