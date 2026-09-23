@@ -11,3 +11,4 @@ api-version: '1.21'
 authors: [mc-vania]
 description: "PacketEvents metrics: network traffic and client version."
 depend: [VaniaMetrics, packetevents]
+folia-supported: true
