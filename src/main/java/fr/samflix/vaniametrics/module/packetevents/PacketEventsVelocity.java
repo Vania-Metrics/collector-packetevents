@@ -12,7 +12,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import fr.samflix.vaniametrics.api.Collector;
 import fr.samflix.vaniametrics.api.VaniaMetrics;
 import fr.samflix.vaniametrics.api.VaniaMetricsProvider;
-import fr.samflix.vaniametrics.api.Version;
 
 /**
  * PacketEvents — network traffic, which the server API doesn't show at all. — Velocity side.
@@ -25,7 +24,7 @@ import fr.samflix.vaniametrics.api.Version;
 @Plugin(
 		id = "vaniametrics-packetevents",
 		name = "VaniaMetrics PacketEvents",
-		version = Version.VALUE,
+		version = BuildVersion.VALUE,
 		description = "PacketEvents — network traffic, which the server API doesn't show at all.",
 		authors = {"mc-vania"},
 		dependencies = {
